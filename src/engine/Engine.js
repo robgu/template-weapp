@@ -1,3 +1,5 @@
+import Configs from '../configs'
+
 const StorageKey = {
   DEVICE_ID: 'TDSDK_deviceId',
   AUTH: 'auth',
@@ -10,10 +12,10 @@ const supportedEnv = {
 }
 
 export default class Engine {
-  static _configs = {}
   static _profiles = {}
-  static _setting = {}
-  static _mockStorage = {} // 某些设备不能setStorage， 用_mockStorage代替
+  static _configs = {}
+  // 某些设备不能setStorage， 用_mockStorage代替
+  static _mockStorage = {}
 
   static init = ({ configs }) => {
     Engine._configs = configs
@@ -29,60 +31,38 @@ export default class Engine {
     }
   }
 
-  static getEndPoint = () => {
-    return Engine._configs.apiEndpoint
-  }
 
-  static getEnv = () => {
-    return Engine._configs.env
+  static getNickName = () => {
+    const { user } = Engine._profiles.auth || {}
+    return user ? user.nickname : ''
   }
 
   static getToken = () => {
-    return Engine._profiles.auth && Engine._profiles.auth.accessToken
-  }
-
-  static getVersion = () => {
-    return Engine._configs.version
-  }
-
-  static getDeviceId = () => {
-    if (!Engine._profiles.deviceId) {
-      Engine._profiles.deviceId = wx.getStorageSync(StorageKey.DEVICE_ID)
-    }
-
-    return Engine._profiles.deviceId
-  }
-
-  static getApiVersion = () => {
-    return Engine._configs.apiVersion
+    return Engine._profiles.auth && Engine._profiles.auth.token
   }
 
   static getWeAppId = () => {
     return Engine._configs.weAppId || ''
   }
 
-  static getSessionKey = () => {
-    return (Engine._profiles.auth && Engine._profiles.auth.sessionKey) || ''
+  static getEnv = () => {
+    return Engine._configs.env
   }
 
-  static getOpenId = () => {
-    return (Engine._profiles.auth && Engine._profiles.auth.user.openId) || ''
+  static getEndPoint = () => {
+    return Engine._configs.apiEndpoint
   }
 
-  static getAuth = () => {
-    return Engine._profiles.auth
+  static getConfigs = () => {
+    return Engine._configs
   }
 
-  static setSetting = (setting) => {
-    if (!setting) {
-      return
-    }
-
-    Engine._setting = setting
+  static getVersion = () => {
+    return Engine._configs.version
   }
 
-  static getSetting = () => {
-    return Engine._setting
+  static getApiVersion = () => {
+    return Engine._configs.apiVersion
   }
 
   static login = (auth) => {
@@ -91,7 +71,7 @@ export default class Engine {
     }
 
     Engine._profiles.auth = auth
-    Engine.setStorage(StorageKey.AUTH, auth)
+    Engine.setStorage(StorageKey.AUTH, auth, { expiresIn: auth.expiresIn })
   }
 
   static relogin = () => {
@@ -108,7 +88,7 @@ export default class Engine {
       Engine._profiles.auth = auth
     }
 
-    Engine.setStorage(StorageKey.AUTH, Engine._profiles.auth)
+    Engine.setStorage(StorageKey.AUTH, auth)
   }
 
   static clearToken = () => {
@@ -127,7 +107,7 @@ export default class Engine {
     wx.setStorageSync(storageKey, data)
 
     if (expiresIn) {
-    // 减去 1 分钟防止抵消各种消耗
+      // 减去 1 分钟防止抵消各种消耗
       const expiresAt = new Date().valueOf() + (expiresIn - 60) * 1000
       wx.setStorageSync(`${storageKey}-expired-at`, expiresAt)
     }
@@ -161,5 +141,12 @@ export default class Engine {
     delete Engine._mockStorage[storageKey]
     wx.removeStorageSync(storageKey)
     wx.removeStorageSync(`${storageKey}-expired-at`)
+  }
+
+  static formatQuery = (query) => {
+    return Object.keys(query)
+      .filter((key) => query[key] !== undefined)
+      .map((key) => `${key}=${query[key]}`)
+      .join('&')
   }
 }

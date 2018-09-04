@@ -1,3 +1,5 @@
+import Engine from '../Engine'
+
 export default class Weixin {
   static _systemInfo
 
@@ -68,6 +70,10 @@ export default class Weixin {
     })
   }
 
+  static showToast = (title, duration = 1500) => {
+    wx.showToast({ title, duration, icon: 'none' })
+  }
+
   static showLoading = (option, immediately) => {
     Weixin._loadingCount++
     clearTimeout(Weixin._loadingTimer)
@@ -86,6 +92,63 @@ export default class Weixin {
     } else {
       Weixin._loadingTimer = setTimeout(() => Weixin._handleLoading(), 1000)
     }
+  }
+
+  static chooseAddress = () => {
+    return new Promise((resolve, reject) => {
+      wx.chooseAddress({
+        success: function (res) {
+          resolve(res)
+        },
+        fail: function (err) {
+          reject(err)
+        },
+      })
+    })
+  }
+
+  static navigateBack = () => {
+    wx.navigateBack()
+  }
+
+  static reLaunch = (url) => {
+    wx.reLaunch({ url })
+  }
+
+  static redirectTo = (path, query = {}) => {
+    const queryString = Engine.formatQuery(query)
+    let url = path
+    if (queryString) {
+      url = `${url}?${queryString}`
+    }
+
+    wx.redirectTo({ url })
+  }
+
+  static navigateTo = (path, query = {}) => {
+    const queryString = Engine.formatQuery(query)
+    let url = path
+    if (queryString) {
+      url = `${url}?${queryString}`
+    }
+
+    wx.navigateTo({ url })
+  }
+
+  static request = (url, data = {}, method = 'GET') => {
+    return new Promise((resolve, reject) => {
+      wx.request({
+        url,
+        data,
+        method,
+        success: function (res) {
+          resolve(res)
+        },
+        fail: function () {
+          reject(err)
+        },
+      })
+    })
   }
 
   static _handleLoading = (option) => {

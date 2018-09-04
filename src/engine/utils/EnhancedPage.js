@@ -1,7 +1,7 @@
 import Engine from '../Engine'
 import I18N from './I18N'
 
-const originalPage = Page // 小程序默认 Page
+const originalPage = Page // 保存原来的Page
 
 Page = function (config) {
   const { onReady } = config
@@ -31,10 +31,30 @@ Page = function (config) {
     }
   }
 
+  if (config.onShareAppMessage) {
+    const { onShareAppMessage } = config
+    config.onShareAppMessage = function (options) {
+      const {
+        path,
+        title,
+        query = {},
+        imageUrl,
+      } = onShareAppMessage.call(this, options)
+
+      query.inviterOpenId = Engine.getOpenId()
+      query.inviterName = Engine.getNickName()
+      query.env = Engine.getEnv()
+
+      const queryString = Engine.formatQuery(query)
+      return { title, imageUrl, path: `${path}?${queryString}` }
+    }
+  }
+
   return originalPage(config)
 }
 
 Page.checkAuthPromise = null
+
 export default Page
 
 const originComponent = Component
