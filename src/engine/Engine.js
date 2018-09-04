@@ -4,8 +4,8 @@ const StorageKey = {
 }
 
 const supportedEnv = {
-  dev: 'dev',
-  prod: 'prod',
+  develop: 'develop',
+  staging: 'staging',
   production: 'prod',
 }
 
@@ -38,7 +38,7 @@ export default class Engine {
   }
 
   static getToken = () => {
-    return Engine._profiles.auth && Engine._profiles.auth.token
+    return Engine._profiles.auth && Engine._profiles.auth.accessToken
   }
 
   static getVersion = () => {
@@ -91,7 +91,7 @@ export default class Engine {
     }
 
     Engine._profiles.auth = auth
-    Engine.setStorage(StorageKey.AUTH, auth, { expiresIn: auth.expiresIn })
+    Engine.setStorage(StorageKey.AUTH, auth)
   }
 
   static relogin = () => {

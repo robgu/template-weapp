@@ -5,6 +5,7 @@ import Profiles from './Profiles'
 import Rest from './utils/Rest'
 import I18N from './utils/I18N'
 import Extensions from './utils/Extensions'
+import Enums from './Enums'
 
 export {
   Weixin,
@@ -14,4 +15,5 @@ export {
   Rest,
   I18N,
   Extensions,
+  Enums,
 }

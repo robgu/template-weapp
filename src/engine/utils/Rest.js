@@ -19,7 +19,6 @@ export default class Rest {
   static post = (url, params) => Rest.request(Method.POST, url, params)
   static put = (url, params) => Rest.request(Method.PUT, url, params)
   static delete = (url, params) => Rest.request(Method.DELETE, url, params)
-  static multi = (apis) => Rest.request(Method.POST, '/multi-proxy', apis)
 
   static formatParams = (url, method, data) => {
     if (method !== Method.GET) {
@@ -63,17 +62,10 @@ export default class Rest {
         lastRequestTaskMarkedAbort[requestName].abort()
       }
 
-      const header = {
-        'grpc-metadata-token': Engine.getToken(),
-        'grpc-metadata-mini-app-version': Engine.getVersion(),
-        'grpc-metadata-mini-api-version': Engine.getApiVersion(),
-        'grpc-metadata-mini-appid': Engine.getWeAppId(),
-      }
-
       const requestTask = wx.request({
         url: formatedUrl,
         data,
-        header,
+        header: Rest.getHeader(),
         method,
         success: function (response) {
           Rest.onHandleResponse({ url, method, data }, response, resolve, reject)
@@ -117,8 +109,44 @@ export default class Rest {
     })
   }
 
+  static mockRequest = (method, url, params) => {
+    return {
+      returns: (result) => {
+        console.warn('mock method', method, url)
+        console.warn('mock request params', params)
+        console.warn('mock response result', result)
+
+        return result
+      },
+    }
+  }
+
+  static mock = {
+    get: (url, params) => Rest.mockRequest(Method.GET, url, params),
+    post: (url, params) => Rest.mockRequest(Method.POST, url, params),
+    delete: (url, params) => Rest.mockRequest(Method.DELETE, url, params),
+    put: (url, params) => Rest.mockRequest(Method.PUT, url, params),
+  }
+
+  static setCookie = (cookie) => {
+    Rest._cookie = cookie
+    Engine.setStorage('cookie', cookie)
+  }
+
+  static getCookie = () => {
+    if (!Rest._cookie) {
+      return Engine.getStorage('cookie')
+    }
+
+    return Rest._cookie
+  }
+
   static onHandleResponse = (request, response, resolve, reject) => {
     if (response.statusCode < 400) {
+      if (response.header['Set-Cookie']) {
+        Rest.setCookie(response.header['Set-Cookie'])
+      }
+
       resolve(response.data)
       return
     }
@@ -144,22 +172,13 @@ export default class Rest {
     console.error({ request, response })
   }
 
-  static mockRequest = (method, url, params) => {
-    return {
-      returns: (result) => {
-        console.warn('mock method', method, url)
-        console.warn('mock request params', params)
-        console.warn('mock response result', result)
+  static getHeader = () => {
+    const header = { 'x-app-id': Engine.getAccountId() }
 
-        return result
-      },
+    if (Rest.getCookie()) {
+      header.cookie = Rest.getCookie()
     }
-  }
 
-  static mock = {
-    get: (url, params) => Rest.mockRequest(Method.GET, url, params),
-    post: (url, params) => Rest.mockRequest(Method.POST, url, params),
-    delete: (url, params) => Rest.mockRequest(Method.DELETE, url, params),
-    put: (url, params) => Rest.mockRequest(Method.PUT, url, params),
+    return header
   }
 }
