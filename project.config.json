@@ -14,7 +14,11 @@
 	"libVersion": "2.1.0",
 	"appid": "template-weapp",
 	"projectname": "template-weapp",
-	"isGameTourist": false,
+    "isGameTourist": false,
+    "client": "client/",
+    "server": "server/",
+    "cloud": true,
+    "cloudfunctionRoot": "cloud-functions/",
 	"condition": {
 		"search": {
 			"current": -1,

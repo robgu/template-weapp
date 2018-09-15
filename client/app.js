@@ -5,6 +5,7 @@ import { Engine, I18N } from './engine/index'
 
 App({
   onLaunch: function (options = {}) {
+    wx.cloud.init({ env: '', traceUser: true })
     const params = options.query
     Engine.init({ configs })
     Engine.setEnv(params.env)

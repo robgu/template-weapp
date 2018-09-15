@@ -14,7 +14,7 @@ npm install
 npm run link-files
 ```
 
-- 在微信开发工具中选择 `src` 路径
+- 在微信开发工具中选择 `项目根目录`
 
 - 使用 vscode 开发
 
