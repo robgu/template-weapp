@@ -43,7 +43,6 @@ Page = function (config) {
 
       query.inviterOpenId = Engine.getOpenId()
       query.inviterName = Engine.getNickName()
-      query.env = Engine.getEnv()
 
       const queryString = Engine.formatQuery(query)
       return { title, imageUrl, path: `${path}?${queryString}` }

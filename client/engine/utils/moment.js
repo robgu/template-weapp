@@ -1,2 +1,1 @@
-const moment = require('moment.min.js');
-export default moment;
+export default require('./libs/moment.min.js')

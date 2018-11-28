@@ -3,7 +3,6 @@
 import Engine from '../Engine'
 import Extensions from './Extensions'
 import I18n from './I18N'
-import Weixin from './Weixin'
 
 const Method = {
   GET: 'GET',
@@ -47,7 +46,7 @@ export default class Rest {
     delete data.showToast
     let formatedUrl = Rest.formatParams(url, method, data)
     if (!ignoreLoading) {
-      Weixin.showLoading({
+      wx.showLoading({
         mask: true,
         title: I18n.i18n('globalMessage', 'loading'),
       })
@@ -55,7 +54,7 @@ export default class Rest {
 
     return new Promise((resolve, reject) => {
       if (!/https/.test(formatedUrl)) {
-        formatedUrl = `${Engine.getEndPoint()}${formatedUrl}`
+        formatedUrl = `${Engine.getEndPoint()}/v2${formatedUrl}`
       }
 
       if (requestName && lastRequestTaskMarkedAbort[requestName]) {
@@ -98,7 +97,7 @@ export default class Rest {
         },
         complete: function () {
           if (!ignoreLoading) {
-            Weixin.hideLoading()
+            wx.hideLoading()
           }
         },
       })
@@ -173,7 +172,10 @@ export default class Rest {
   }
 
   static getHeader = () => {
-    const header = { 'x-app-id': Engine.getAccountId() }
+    const header = {
+      'x-account-id': Engine.getAccountId(),
+      'x-access-token': Engine.getAccessToken(),
+    }
 
     if (Rest.getCookie()) {
       header.cookie = Rest.getCookie()
