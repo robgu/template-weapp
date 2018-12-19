@@ -1,10 +1,22 @@
-function f(func, obj) {
+import query from './libs/querystringfy'
+
+function promisify(func, obj = {}, ...args) {
   return new Promise((resolve, reject) => {
     func({
       ...obj,
-      success: resolve,
-      fail: reject,
-    })
+      success: function (res) {
+        resolve(res)
+        if (obj.success) {
+          obj.success(res)
+        }
+      },
+      fail: function (res) {
+        reject(res)
+        if (obj.fail) {
+          obj.fail(res)
+        }
+      },
+    }, ...args)
   })
 }
 
@@ -110,5 +122,28 @@ const methods = [
 ]
 
 for (const method of methods) {
-  wx[`${method}Async`] = (obj) => f(wx[method], obj)
+  const originMethod = wx[method]
+  Object.defineProperty(wx, method, {
+    value: (...args) => {
+      return promisify(originMethod, ...args)
+    },
+  })
 }
+
+[
+  { method: 'navigateTo', key: 'url' },
+  { method: 'reLaunch', key: 'url' },
+  { method: 'redirectTo', key: 'url' },
+  { method: 'navigateToMiniProgram', key: 'path' },
+].forEach((item) => {
+  const originMethod = wx[item.method]
+  Object.defineProperty(wx, item.method, {
+    value: (options) => {
+      if (options.query) {
+        options[item.key] = query.stringify(options.query, `${options[item.key]}?`)
+      }
+
+      originMethod(options)
+    },
+  })
+})

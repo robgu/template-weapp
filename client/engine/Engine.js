@@ -1,15 +1,7 @@
-import Configs from '../configs'
+import I18N from './utils/I18N'
+import querystringfy from './utils/libs/querystringfy'
 
-const StorageKey = {
-  DEVICE_ID: 'TDSDK_deviceId',
-  AUTH: 'auth',
-}
-
-const supportedEnv = {
-  develop: 'develop',
-  staging: 'staging',
-  production: 'prod',
-}
+const StorageKey = { AUTH: 'auth' }
 
 export default class Engine {
   static _profiles = {}
@@ -17,40 +9,20 @@ export default class Engine {
   // 某些设备不能setStorage， 用_mockStorage代替
   static _mockStorage = {}
 
-  static init = ({ configs }) => {
+  static init = ({ configs, i18n = {} }) => {
+    // eslint-disable-next-line
+    console.debug('ext configs', configs)
+    I18N.loadLang(i18n)
     Engine._configs = configs
-  }
-
-  static setEnv = (env) => {
-    env = supportedEnv[env] || Engine._configs.env || Engine._configs.defaultEnv
-    if (env !== Engine._configs.env) {
-      Engine._profiles = {}
-      Engine._configs.env = env
-      Engine._configs = { ...Engine._configs, ...Engine._configs[env] }
-      Engine._profiles.auth = Engine.getStorage(StorageKey.AUTH)
-    }
-  }
-
-
-  static getNickName = () => {
-    const { user } = Engine._profiles.auth || {}
-    return user ? user.nickname : ''
-  }
-
-  static getToken = () => {
-    return Engine._profiles.auth && Engine._profiles.auth.token
+    Engine._profiles[StorageKey.AUTH] = Engine.getStorage(StorageKey.AUTH)
   }
 
   static getWeAppId = () => {
     return Engine._configs.weAppId || ''
   }
 
-  static getEnv = () => {
-    return Engine._configs.env
-  }
-
-  static getEndPoint = () => {
-    return Engine._configs.apiEndpoint
+  static getDomain = () => {
+    return Engine._configs.apiDomain
   }
 
   static getConfigs = () => {
@@ -83,7 +55,7 @@ export default class Engine {
   static updateAuth = (auth) => {
     if (Engine._profiles.auth) {
       Engine._profiles.auth.user = auth.user
-      Engine._profiles.auth.token = auth.token
+      Engine._profiles.auth.accessToken = auth.accessToken
     } else {
       Engine._profiles.auth = auth
     }
@@ -91,16 +63,33 @@ export default class Engine {
     Engine.setStorage(StorageKey.AUTH, auth)
   }
 
+  static getAccessToken = () => {
+    return Engine._profiles.auth && Engine._profiles.auth.accessToken
+  }
+
   static clearToken = () => {
     delete Engine._profiles.auth
     Engine.removeStorage(StorageKey.AUTH)
+  }
+
+  static getNickName = () => {
+    const { member } = Engine._profiles.auth || {}
+    return member ? member.name : ''
+  }
+
+  static getOpenId = () => {
+    return Engine._profiles.auth && Engine._profiles.auth.openId
+  }
+
+  static getUnionId = () => {
+    return Engine._profiles.auth && Engine._profiles.auth.unionId
   }
 
   // expiresIn 单位秒
   static setStorage = (key, data, { scoped = true, expiresIn } = {}) => {
     let storageKey = key
     if (scoped) {
-      storageKey = `${Engine.getEnv()}-${Engine._configs.storageVersion}-${key}`
+      storageKey = `${Engine._configs.storageVersion}-${key}`
     }
 
     Engine._mockStorage[storageKey] = data
@@ -116,7 +105,7 @@ export default class Engine {
   static getStorage = (key, { scoped = true } = {}) => {
     let storageKey = key
     if (scoped) {
-      storageKey = `${Engine.getEnv()}-${Engine._configs.storageVersion}-${key}`
+      storageKey = `${Engine._configs.storageVersion}-${key}`
     }
 
     const value = Engine._mockStorage[storageKey]
@@ -135,18 +124,11 @@ export default class Engine {
   static removeStorage = (key, { scoped = true } = {}) => {
     let storageKey = key
     if (scoped) {
-      storageKey = `${Engine.getEnv()}-${Engine._configs.storageVersion}-${key}`
+      storageKey = `${Engine._configs.storageVersion}-${key}`
     }
 
     delete Engine._mockStorage[storageKey]
     wx.removeStorageSync(storageKey)
     wx.removeStorageSync(`${storageKey}-expired-at`)
-  }
-
-  static formatQuery = (query) => {
-    return Object.keys(query)
-      .filter((key) => query[key] !== undefined)
-      .map((key) => `${key}=${query[key]}`)
-      .join('&')
   }
 }

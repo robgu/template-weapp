@@ -11,14 +11,14 @@
 		"newFeature": true
 	},
 	"compileType": "miniprogram",
-	"libVersion": "2.1.0",
-	"appid": "template-weapp",
+	"libVersion": "2.4.2",
+	"appid": "wx916fed8d014518ca",
 	"projectname": "template-weapp",
-    "isGameTourist": false,
-    "client": "client/",
-    "server": "server/",
-    "cloud": true,
-    "cloudfunctionRoot": "cloud-functions/",
+	"isGameTourist": false,
+	"client": "client/",
+	"server": "server/",
+	"cloud": true,
+	"cloudfunctionRoot": "cloud-functions/",
 	"condition": {
 		"search": {
 			"current": -1,

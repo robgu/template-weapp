@@ -1,2 +1,4 @@
-export default class Enums {
+export const Gender = {
+  MALE: 'male',
+  FEMALE: 'female',
 }

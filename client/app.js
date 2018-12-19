@@ -1,22 +1,24 @@
 import './engine/utils/EnhancedPage'
+import './engine/utils/EnhancedWeixin'
 
-import configs from './configs'
-import { Engine, I18N } from './engine/index'
+import { Engine } from './engine/index'
+import i18n from './i18n/index'
 
 App({
-  onLaunch: function (options = {}) {
+  onLaunch: function () {
     wx.cloud.init({ env: '', traceUser: true })
-    const params = options.query
-    Engine.init({ configs })
-    Engine.setEnv(params.env)
+    let configs = wx.getExtConfigSync()
+    if (!Object.keys(configs).length) {
+      // 如果不使用 ext.json 则需要创建 ext.js 配置文件
+      const { ext } = require('./ext').default
+      configs = ext
+    }
+
+    Engine.init({ configs, i18n })
   },
 
   onShow: function (options) {
     // eslint-disable-next-line
-    console.warn('app.onShow', options)
-  },
-
-  i18n: (...args) => {
-    return I18N.i18n(...args)
+    console.debug('app.onShow', options)
   },
 })

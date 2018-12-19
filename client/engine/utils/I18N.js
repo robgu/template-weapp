@@ -1,18 +1,17 @@
-const translations = { zh_CN: require('../../i18n/zh-CN').default }
-
 export default class I18N {
-  static language = 'zh_CN'
+  static translations = null
 
-  static loadLang = (lang) => {
+  static loadLang = (translations, lang) => {
+    I18N.translations = translations
     if (translations[lang]) {
       I18N.language = lang
     } else {
-      I18N.language = 'zh_CN'
+      I18N.language = Object.keys(translations)[0]
     }
   }
 
   static i18n = (path, key, ...args) => {
-    const localTranslations = translations[I18N.language]
+    const localTranslations = I18N.translations[I18N.language]
     const value = localTranslations[path] || {}
     let res = value[key]
     if (!res) {
@@ -30,7 +29,7 @@ export default class I18N {
   }
 
   static getI18NRes = (path) => {
-    const localTranslations = translations[I18N.language]
+    const localTranslations = I18N.translations[I18N.language]
     return localTranslations[path] || {}
   }
 }

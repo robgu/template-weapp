@@ -1,0 +1,30 @@
+page {
+  /* colors start */
+  --white: #fff;
+  /* colors end */
+
+  /* z-index start */
+  --bg: -1;
+  --prompt: 990;
+  /* z-index end */
+
+  background: var(--color-e);
+}
+
+.preview {
+  height: 1334rpx;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: -120rpx;
+  width: 750rpx;
+}
+
+.bg {
+  height: 1206rpx;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 750rpx;
+}

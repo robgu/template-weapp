@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
 
 import Engine from '../Engine'
-import Extensions from './Extensions'
 import I18n from './I18N'
+import _ from './libs/underscore'
 
 const Method = {
   GET: 'GET',
@@ -13,11 +13,18 @@ const Method = {
 
 const lastRequestTaskMarkedAbort = {}
 
+const defaultConfig = {
+  ignoreLoading: false,
+  showToast: false,
+  requestName: '',
+  baseUrl: '',
+}
+
 export default class Rest {
-  static get = (url, params) => Rest.request(Method.GET, url, params)
-  static post = (url, params) => Rest.request(Method.POST, url, params)
-  static put = (url, params) => Rest.request(Method.PUT, url, params)
-  static delete = (url, params) => Rest.request(Method.DELETE, url, params)
+  static get = (url, params, config = defaultConfig) => Rest.request(Method.GET, url, params, config)
+  static post = (url, params, config = defaultConfig) => Rest.request(Method.POST, url, params, config)
+  static put = (url, params, config = defaultConfig) => Rest.request(Method.PUT, url, params, config)
+  static delete = (url, params, config = defaultConfig) => Rest.request(Method.DELETE, url, params, config)
 
   static formatParams = (url, method, data) => {
     if (method !== Method.GET) {
@@ -26,7 +33,7 @@ export default class Rest {
 
     const arrayParams = []
     for (const key in data) {
-      if (Extensions.isArray(data[key]) && data[key].length) {
+      if (_.isArray(data[key]) && data[key].length) {
         arrayParams.push(`${key}=${data[key].join(',')}`)
         delete data[key]
       }
@@ -39,11 +46,8 @@ export default class Rest {
     return url
   }
 
-  static request = (method, url, data = {}) => {
-    const { ignoreLoading = false, showToast, requestName = '' } = data
-    delete data.requestName
-    delete data.ignoreLoading
-    delete data.showToast
+  static request = (method, url, data = {}, config) => {
+    const { ignoreLoading = false, showToast, requestName = '' } = config
     let formatedUrl = Rest.formatParams(url, method, data)
     if (!ignoreLoading) {
       wx.showLoading({
@@ -54,17 +58,20 @@ export default class Rest {
 
     return new Promise((resolve, reject) => {
       if (!/https/.test(formatedUrl)) {
-        formatedUrl = `${Engine.getEndPoint()}/v2${formatedUrl}`
+        const baseUrl = config.baseUrl || Engine.getDomain()
+        formatedUrl = `${baseUrl}${formatedUrl}`
       }
 
       if (requestName && lastRequestTaskMarkedAbort[requestName]) {
         lastRequestTaskMarkedAbort[requestName].abort()
       }
 
+      const header = Rest.getHeader()
+
       const requestTask = wx.request({
         url: formatedUrl,
         data,
-        header: Rest.getHeader(),
+        header,
         method,
         success: function (response) {
           Rest.onHandleResponse({ url, method, data }, response, resolve, reject)
@@ -99,6 +106,14 @@ export default class Rest {
           if (!ignoreLoading) {
             wx.hideLoading()
           }
+
+          // eslint-disable-next-line
+          console.debug('request complete', {
+            url: formatedUrl,
+            data,
+            header,
+            method,
+          })
         },
       })
 
@@ -127,25 +142,9 @@ export default class Rest {
     put: (url, params) => Rest.mockRequest(Method.PUT, url, params),
   }
 
-  static setCookie = (cookie) => {
-    Rest._cookie = cookie
-    Engine.setStorage('cookie', cookie)
-  }
-
-  static getCookie = () => {
-    if (!Rest._cookie) {
-      return Engine.getStorage('cookie')
-    }
-
-    return Rest._cookie
-  }
 
   static onHandleResponse = (request, response, resolve, reject) => {
     if (response.statusCode < 400) {
-      if (response.header['Set-Cookie']) {
-        Rest.setCookie(response.header['Set-Cookie'])
-      }
-
       resolve(response.data)
       return
     }
@@ -175,10 +174,6 @@ export default class Rest {
     const header = {
       'x-account-id': Engine.getAccountId(),
       'x-access-token': Engine.getAccessToken(),
-    }
-
-    if (Rest.getCookie()) {
-      header.cookie = Rest.getCookie()
     }
 
     return header
